@@ -18,7 +18,7 @@ package com.android.launcher3.config;
 
 public class ProviderConfig {
 
-    public static final String AUTHORITY = "com.google.android.apps.nexuslauncher.settings".intern();
+    public static final String AUTHORITY = "com.google.android.apps.pixelclauncher.settings".intern();
 
     public static final boolean IS_DOGFOOD_BUILD = true;
 }

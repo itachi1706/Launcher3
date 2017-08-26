@@ -32,7 +32,7 @@ android {
 
     productFlavors {
         aosp {
-            applicationId 'com.google.android.apps.nexuslauncher'
+            applicationId 'com.google.android.apps.pixelclauncher'
             testApplicationId 'com.android.launcher3.tests'
         }
     }
