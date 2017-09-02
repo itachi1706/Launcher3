@@ -58,4 +58,14 @@
         android:persistent="true"
         />
 
+    <!-- Custom: Preference for Override -->
+    <ListPreference
+        android:key="pref_grid_size"
+        android:title="Home Screen Grid Size"
+        android:summary="%s"
+        android:entries="@array/grid_size_text"
+        android:entryValues="@array/grid_size_ent"
+        android:defaultValue="0"
+        android:persistent="false" />
+    <!-- End Custom -->
 </PreferenceScreen>
