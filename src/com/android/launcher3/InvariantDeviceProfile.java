@@ -18,10 +18,12 @@ package com.android.launcher3;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Point;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Xml;
 import android.view.Display;
@@ -162,6 +164,12 @@ public class InvariantDeviceProfile {
         // Supported overrides: numRows, numColumns, iconSize
         applyPartnerDeviceProfileOverrides(context, dm);
 
+        // Custom: Override
+        SharedPreferences sp = context.getSharedPreferences(LauncherFiles.DEVICE_PREFERENCES_KEY, 0);
+        int override = Integer.parseInt(sp.getString("pref_grid_size", "0"));
+        applyOverride(this, override);
+        // End Custom
+
         hotseatScale = hotseatIconSize / iconSize;
 
         Point realSize = new Point();
@@ -186,6 +194,46 @@ public class InvariantDeviceProfile {
             defaultWallpaperSize = new Point(Math.max(smallSide * 2, largeSide), largeSide);
         }
     }
+
+    // Custom: Override Methods
+    private void applyOverride(InvariantDeviceProfile iv, int option) {
+        switch (option) {
+            case 1: applyOverride(iv, 2, 3); break;
+            case 2: applyOverride(iv, 3, 3); break;
+            case 3: applyOverride(iv, 3, 4); break;
+            case 4: applyOverride(iv, 4, 4); break;
+            case 5: applyOverride(iv, 5, 5); break;
+            case 6: applyOverride(iv, 5, 6); break;
+            case 7: applyOverride(iv, 7, 7); break;
+        }
+    }
+
+    /**
+     * Applies Override
+     * List (rowXcolumn = icon):
+     * 2x3,3x3,3x4 = 48
+     * 4x4,5x5 = 58
+     * 5x6 = 72
+     * 7x7 = 100
+     * @param iv Invariant Profile for Device
+     * @param numRows Number of Rows
+     * @param numColumns Number of Columns
+     */
+    private void applyOverride(InvariantDeviceProfile iv, int numRows, int numColumns) {
+        if ((numRows == 2 || numRows == 3) && (numColumns == 3 || numColumns == 4))
+            applyOverride(iv, numRows, numColumns, 48f);
+        else if ((numColumns == 4 && numRows == 4) || (numColumns == 5 && numRows == 5))
+            applyOverride(iv, numRows, numColumns, 58f);
+        else if (numRows == 5 && numColumns == 6) applyOverride(iv, numRows, numColumns, 72f);
+        else applyOverride(iv, numRows, numColumns, 100f);
+    }
+
+    private void applyOverride(InvariantDeviceProfile iv, int numRows, int numColumns, float iconSize) {
+        iv.numColumns = numColumns;
+        iv.numRows = numRows;
+        iv.iconSize = iconSize;
+    }
+    // End Custom
 
     ArrayList<InvariantDeviceProfile> getPredefinedDeviceProfiles(Context context) {
         ArrayList<InvariantDeviceProfile> profiles = new ArrayList<>();

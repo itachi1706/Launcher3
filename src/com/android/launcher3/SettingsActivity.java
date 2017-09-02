@@ -17,13 +17,19 @@
 package com.android.launcher3;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentResolver;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.provider.Settings.System;
 
@@ -104,6 +110,35 @@ public class SettingsActivity extends Activity {
                 } else {
                     getPreferenceScreen().removePreference(iconShapeOverride);
                 }
+            }
+
+            // Custom: Add Preference
+            Preference launcher = findPreference("pref_grid_size");
+            final SharedPreferences pref_dp = getContext().getSharedPreferences(LauncherFiles.DEVICE_PREFERENCES_KEY, 0);
+            ((ListPreference)launcher).setValue(pref_dp.getString("pref_grid_size", "0"));
+            if (launcher != null) {
+                launcher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        ((ListPreference)preference).setValue(newValue.toString());
+                        pref_dp.edit().putString("pref_grid_size", newValue.toString()).commit();
+
+                        // Schedule an alarm before we kill ourself.
+                        Intent homeIntent = new Intent(Intent.ACTION_MAIN)
+                                .addCategory(Intent.CATEGORY_HOME)
+                                .setPackage(getContext().getPackageName())
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        PendingIntent pi = PendingIntent.getActivity(getContext(), 42,
+                                homeIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_ONE_SHOT);
+                        ((AlarmManager) getContext().getSystemService(ALARM_SERVICE)).setExact(
+                                AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 50, pi);
+
+                        // Kill process
+                        android.os.Process.killProcess(android.os.Process.myPid());
+                        return false;
+                    }
+                });
+                // End Custom
             }
         }
 
