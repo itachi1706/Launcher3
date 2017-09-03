@@ -68,6 +68,6 @@
         android:defaultValue="0"
         android:persistent="false" />
 
-    <Preference android:key="mod_version" android:title="Mod Version" android:summary="1.0" />
+    <Preference android:key="mod_version" android:title="Mod Version" android:summary="1.1" />
     <!-- End Custom -->
 </PreferenceScreen>

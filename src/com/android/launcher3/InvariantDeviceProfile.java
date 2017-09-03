@@ -205,6 +205,9 @@ public class InvariantDeviceProfile {
             case 5: applyOverride(iv, 5, 5); break;
             case 6: applyOverride(iv, 5, 6); break;
             case 7: applyOverride(iv, 7, 7); break;
+            case 8: applyOverride(iv, 3, 6, 64f); break;
+            case 9: applyOverride(iv, 4, 6, 64f); break;
+            case 10: applyOverride(iv, 5, 6, 64f); break;
         }
     }
 
@@ -215,6 +218,9 @@ public class InvariantDeviceProfile {
      * 4x4,5x5 = 58
      * 5x6 = 72
      * 7x7 = 100
+     * 3x4 = 64 (Pixel C)
+     * 4x6 = 64 (Pixel C)
+     * 5x6 = 64 (Pixel C)
      * @param iv Invariant Profile for Device
      * @param numRows Number of Rows
      * @param numColumns Number of Columns
