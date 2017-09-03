@@ -1,0 +1,60 @@
+diff --git a/res/values/config.xml b/res/values/config.xml
+index 39e4931..a17b1c7 100644
+--- a/res/values/config.xml
++++ b/res/values/config.xml
+@@ -145,6 +145,9 @@
+         <item>5x5</item>
+         <item>5x6 (Tablet)</item>
+         <item>7x7 (Tablet)</item>
++        <item>3x6 (Pixel C Size)</item>
++        <item>4x6 (Pixel C Size)</item>
++        <item>5x6 (Pixel C Size)</item>
+     </string-array>
+     <string-array name="grid_size_ent" translatable="false">
+         <item>0</item>
+@@ -155,6 +158,9 @@
+         <item>5</item>
+         <item>6</item>
+         <item>7</item>
++        <item>8</item>
++        <item>9</item>
++        <item>10</item>
+     </string-array>
+ <!-- End Custom -->
+ </resources>
+diff --git a/res/xml/launcher_preferences.xml b/res/xml/launcher_preferences.xml
+index bc2cb24..bc99343 100644
+--- a/res/xml/launcher_preferences.xml
++++ b/res/xml/launcher_preferences.xml
+@@ -68,6 +68,6 @@
+         android:defaultValue="0"
+         android:persistent="false" />
+ 
+-    <Preference android:key="mod_version" android:title="Mod Version" android:summary="1.0" />
++    <Preference android:key="mod_version" android:title="Mod Version" android:summary="1.1" />
+     <!-- End Custom -->
+ </PreferenceScreen>
+diff --git a/src/com/android/launcher3/InvariantDeviceProfile.java b/src/com/android/launcher3/InvariantDeviceProfile.java
+index f649d9d..4533504 100644
+--- a/src/com/android/launcher3/InvariantDeviceProfile.java
++++ b/src/com/android/launcher3/InvariantDeviceProfile.java
+@@ -205,6 +205,9 @@ public class InvariantDeviceProfile {
+             case 5: applyOverride(iv, 5, 5); break;
+             case 6: applyOverride(iv, 5, 6); break;
+             case 7: applyOverride(iv, 7, 7); break;
++            case 8: applyOverride(iv, 3, 6, 64f); break;
++            case 9: applyOverride(iv, 4, 6, 64f); break;
++            case 10: applyOverride(iv, 5, 6, 64f); break;
+         }
+     }
+ 
+@@ -215,6 +218,9 @@ public class InvariantDeviceProfile {
+      * 4x4,5x5 = 58
+      * 5x6 = 72
+      * 7x7 = 100
++     * 3x4 = 64 (Pixel C)
++     * 4x6 = 64 (Pixel C)
++     * 5x6 = 64 (Pixel C)
+      * @param iv Invariant Profile for Device
+      * @param numRows Number of Rows
+      * @param numColumns Number of Columns
