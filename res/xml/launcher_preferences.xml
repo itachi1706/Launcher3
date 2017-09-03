@@ -49,7 +49,7 @@
                 android:name=":settings:fragment_args_key"
                 android:value="notification_badging" />
         </intent>
-    </Preference>/>
+    </Preference>
 
     <SwitchPreference
         android:key="pref_allowRotation"
@@ -67,5 +67,7 @@
         android:entryValues="@array/grid_size_ent"
         android:defaultValue="0"
         android:persistent="false" />
+
+    <Preference android:key="mod_version" android:title="Mod Version" android:summary="1.0" />
     <!-- End Custom -->
 </PreferenceScreen>
