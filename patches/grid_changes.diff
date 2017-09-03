@@ -1,0 +1,432 @@
+From f30e83facddeb5d9b2a00e933d03d6f908310ef7 Mon Sep 17 00:00:00 2001
+From: itachi1706 <kennethsohyq@gmail.com>
+Date: Sun, 3 Sep 2017 00:17:12 +0800
+Subject: [PATCH] Did the modifications needed to add in custom grid sizes
+
+Now to figure out how to sign a debug apk without using the AndroidDebug key...
+---
+ res/values/config.xml                              | 23 +++++++++++
+ res/xml/launcher_preferences.xml                   | 10 +++++
+ .../android/launcher3/InvariantDeviceProfile.java  | 48 ++++++++++++++++++++++
+ src/com/android/launcher3/SettingsActivity.java    | 35 ++++++++++++++++
+ 4 files changed, 116 insertions(+)
+
+diff --git a/res/values/config.xml b/res/values/config.xml
+index f3ee319..26c5ed6 100644
+--- a/res/values/config.xml
++++ b/res/values/config.xml
+@@ -134,4 +134,27 @@
+     <item type="id" name="action_resize" />
+     <item type="id" name="action_deep_shortcuts" />
+     <item type="id" name="action_dismiss_notification" />
++
++<!-- Custom Edit: Home Screen Grid Size -->
++    <string-array name="grid_size_text">
++        <item>Default</item>
++        <item>2x2</item>
++        <item>3x3</item>
++        <item>3x4</item>
++        <item>4x4</item>
++        <item>5x5</item>
++        <item>5x6 (Tablet)</item>
++        <item>7x7 (Tablet)</item>
++    </string-array>
++    <string-array name="grid_size_ent">
++        <item>0</item>
++        <item>1</item>
++        <item>2</item>
++        <item>3</item>
++        <item>4</item>
++        <item>5</item>
++        <item>6</item>
++        <item>7</item>
++    </string-array>
++<!-- End Custom -->
+ </resources>
+diff --git a/res/xml/launcher_preferences.xml b/res/xml/launcher_preferences.xml
+index d9583b1..11275f6 100644
+--- a/res/xml/launcher_preferences.xml
++++ b/res/xml/launcher_preferences.xml
+@@ -58,4 +58,14 @@
+         android:persistent="true"
+         />
+ 
++    <!-- Custom: Preference for Override -->
++    <ListPreference
++        android:key="pref_grid_size"
++        android:title="Home Screen Grid Size"
++        android:summary="%s"
++        android:entries="@array/grid_size_text"
++        android:entryValues="@array/grid_size_ent"
++        android:defaultValue="0"
++        android:persistent="false" />
++    <!-- End Custom -->
+ </PreferenceScreen>
+diff --git a/src/com/android/launcher3/InvariantDeviceProfile.java b/src/com/android/launcher3/InvariantDeviceProfile.java
+index 9e214d1..f649d9d 100644
+--- a/src/com/android/launcher3/InvariantDeviceProfile.java
++++ b/src/com/android/launcher3/InvariantDeviceProfile.java
+@@ -18,10 +18,12 @@ package com.android.launcher3;
+ 
+ import android.annotation.TargetApi;
+ import android.content.Context;
++import android.content.SharedPreferences;
+ import android.content.res.Configuration;
+ import android.content.res.TypedArray;
+ import android.content.res.XmlResourceParser;
+ import android.graphics.Point;
++import android.preference.PreferenceManager;
+ import android.util.DisplayMetrics;
+ import android.util.Xml;
+ import android.view.Display;
+@@ -162,6 +164,12 @@ public class InvariantDeviceProfile {
+         // Supported overrides: numRows, numColumns, iconSize
+         applyPartnerDeviceProfileOverrides(context, dm);
+ 
++        // Custom: Override
++        SharedPreferences sp = context.getSharedPreferences(LauncherFiles.DEVICE_PREFERENCES_KEY, 0);
++        int override = Integer.parseInt(sp.getString("pref_grid_size", "0"));
++        applyOverride(this, override);
++        // End Custom
++
+         hotseatScale = hotseatIconSize / iconSize;
+ 
+         Point realSize = new Point();
+@@ -187,6 +195,46 @@ public class InvariantDeviceProfile {
+         }
+     }
+ 
++    // Custom: Override Methods
++    private void applyOverride(InvariantDeviceProfile iv, int option) {
++        switch (option) {
++            case 1: applyOverride(iv, 2, 3); break;
++            case 2: applyOverride(iv, 3, 3); break;
++            case 3: applyOverride(iv, 3, 4); break;
++            case 4: applyOverride(iv, 4, 4); break;
++            case 5: applyOverride(iv, 5, 5); break;
++            case 6: applyOverride(iv, 5, 6); break;
++            case 7: applyOverride(iv, 7, 7); break;
++        }
++    }
++
++    /**
++     * Applies Override
++     * List (rowXcolumn = icon):
++     * 2x3,3x3,3x4 = 48
++     * 4x4,5x5 = 58
++     * 5x6 = 72
++     * 7x7 = 100
++     * @param iv Invariant Profile for Device
++     * @param numRows Number of Rows
++     * @param numColumns Number of Columns
++     */
++    private void applyOverride(InvariantDeviceProfile iv, int numRows, int numColumns) {
++        if ((numRows == 2 || numRows == 3) && (numColumns == 3 || numColumns == 4))
++            applyOverride(iv, numRows, numColumns, 48f);
++        else if ((numColumns == 4 && numRows == 4) || (numColumns == 5 && numRows == 5))
++            applyOverride(iv, numRows, numColumns, 58f);
++        else if (numRows == 5 && numColumns == 6) applyOverride(iv, numRows, numColumns, 72f);
++        else applyOverride(iv, numRows, numColumns, 100f);
++    }
++
++    private void applyOverride(InvariantDeviceProfile iv, int numRows, int numColumns, float iconSize) {
++        iv.numColumns = numColumns;
++        iv.numRows = numRows;
++        iv.iconSize = iconSize;
++    }
++    // End Custom
++
+     ArrayList<InvariantDeviceProfile> getPredefinedDeviceProfiles(Context context) {
+         ArrayList<InvariantDeviceProfile> profiles = new ArrayList<>();
+         try (XmlResourceParser parser = context.getResources().getXml(R.xml.device_profiles)) {
+diff --git a/src/com/android/launcher3/SettingsActivity.java b/src/com/android/launcher3/SettingsActivity.java
+index b7b75f8..ca0bae9 100644
+--- a/src/com/android/launcher3/SettingsActivity.java
++++ b/src/com/android/launcher3/SettingsActivity.java
+@@ -17,13 +17,19 @@
+ package com.android.launcher3;
+ 
+ import android.app.Activity;
++import android.app.AlarmManager;
++import android.app.PendingIntent;
+ import android.content.ContentResolver;
++import android.content.Intent;
++import android.content.SharedPreferences;
+ import android.database.ContentObserver;
+ import android.os.Bundle;
+ import android.os.Handler;
++import android.os.SystemClock;
+ import android.preference.ListPreference;
+ import android.preference.Preference;
+ import android.preference.PreferenceFragment;
++import android.preference.PreferenceManager;
+ import android.provider.Settings;
+ import android.provider.Settings.System;
+ 
+@@ -105,6 +111,35 @@ public class SettingsActivity extends Activity {
+                     getPreferenceScreen().removePreference(iconShapeOverride);
+                 }
+             }
++
++            // Custom: Add Preference
++            Preference launcher = findPreference("pref_grid_size");
++            final SharedPreferences pref_dp = getContext().getSharedPreferences(LauncherFiles.DEVICE_PREFERENCES_KEY, 0);
++            ((ListPreference)launcher).setValue(pref_dp.getString("pref_grid_size", "0"));
++            if (launcher != null) {
++                launcher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
++                    @Override
++                    public boolean onPreferenceChange(Preference preference, Object newValue) {
++                        ((ListPreference)preference).setValue(newValue.toString());
++                        pref_dp.edit().putString("pref_grid_size", newValue.toString()).commit();
++
++                        // Schedule an alarm before we kill ourself.
++                        Intent homeIntent = new Intent(Intent.ACTION_MAIN)
++                                .addCategory(Intent.CATEGORY_HOME)
++                                .setPackage(getContext().getPackageName())
++                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
++                        PendingIntent pi = PendingIntent.getActivity(getContext(), 42,
++                                homeIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_ONE_SHOT);
++                        ((AlarmManager) getContext().getSystemService(ALARM_SERVICE)).setExact(
++                                AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 50, pi);
++
++                        // Kill process
++                        android.os.Process.killProcess(android.os.Process.myPid());
++                        return false;
++                    }
++                });
++                // End Custom
++            }
+         }
+ 
+         @Override
+-- 
+2.7.2.windows.1
+
+From 171bd2a2522ce3e2a89b3c98a4edcbc9b7cfba87 Mon Sep 17 00:00:00 2001
+From: itachi1706 <kennethsohyq@gmail.com>
+Date: Sun, 3 Sep 2017 17:03:29 +0800
+Subject: [PATCH] Fixed everything to ensure that we can now compile release
+ build. Also attached release build to repo
+
+---
+ AndroidManifest.xml                                |   5 ++-
+ res/anim/discovery_bounce.xml                      |  45 ---------------------
+ res/animator/discovery_bounce.xml                  |  45 +++++++++++++++++++++
+ res/values/config.xml                              |   4 +-
+ res/values/strings.xml                             |   4 +-
+ .../allapps/AllAppsTransitionController.java       |   2 +-
+ 6 files changed, 54 insertions(+), 51 deletions(-)
+  delete mode 100644 res/anim/discovery_bounce.xml
+ create mode 100644 res/animator/discovery_bounce.xml
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 4527dc2..f9346be 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -17,8 +17,8 @@
+ ** limitations under the License.
+ */
+ -->
+-<manifest
+-    xmlns:android="http://schemas.android.com/apk/res/android"
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:tools="http://schemas.android.com/tools"
+     package="com.android.launcher3">
+     <uses-sdk android:targetSdkVersion="26" android:minSdkVersion="21"/>
+     <uses-feature android:glEsVersion="0x00020000" android:required="false"/>
+@@ -63,6 +63,7 @@
+         android:label="@string/derived_app_name"
+         android:theme="@style/LauncherTheme"
+         android:largeHeap="@bool/config_largeHeap"
++        tools:ignore="ManifestResource"
+         android:restoreAnyVersion="true"
+         android:supportsRtl="true" >
+
+diff --git a/res/anim/discovery_bounce.xml b/res/anim/discovery_bounce.xml
+deleted file mode 100644
+index 1f7d466..0000000
+--- a/res/anim/discovery_bounce.xml
++++ /dev/null
+@@ -1,45 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!--
+-/*
+-** Copyright 2016, The Android Open Source Project
+-**
+-** Licensed under the Apache License, Version 2.0 (the "License");
+-** you may not use this file except in compliance with the License.
+-** You may obtain a copy of the License at
+-**
+-**     http://www.apache.org/licenses/LICENSE-2.0
+-**
+-** Unless required by applicable law or agreed to in writing, software
+-** distributed under the License is distributed on an "AS IS" BASIS,
+-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-** See the License for the specific language governing permissions and
+-** limitations under the License.
+-*/
+--->
+-
+-<set xmlns:android="http://schemas.android.com/apk/res/android"
+-        android:ordering="sequentially"
+-        android:startOffset="200">
+-
+-    <objectAnimator
+-        android:propertyName="progress"
+-        android:duration="250"
+-        android:interpolator="@interpolator/disco_bounce_section1"
+-        android:valueFrom="1f"
+-        android:valueTo=".94f"
+-        android:valueType="floatType"/>
+-    <objectAnimator
+-        android:propertyName="progress"
+-        android:duration="216"
+-        android:interpolator="@interpolator/disco_bounce_section2"
+-        android:valueFrom=".94f"
+-        android:valueTo="1.012f"
+-        android:valueType="floatType"/>
+-    <objectAnimator
+-        android:propertyName="progress"
+-        android:duration="234"
+-        android:interpolator="@interpolator/disco_bounce_section3"
+-        android:valueFrom="1.012f"
+-        android:valueTo="1f"
+-        android:valueType="floatType"/>
+-</set>
+diff --git a/res/animator/discovery_bounce.xml b/res/animator/discovery_bounce.xml
+new file mode 100644
+index 0000000..1f7d466
+--- /dev/null
++++ b/res/animator/discovery_bounce.xml
+@@ -0,0 +1,45 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++/*
++** Copyright 2016, The Android Open Source Project
++**
++** Licensed under the Apache License, Version 2.0 (the "License");
++** you may not use this file except in compliance with the License.
++** You may obtain a copy of the License at
++**
++**     http://www.apache.org/licenses/LICENSE-2.0
++**
++** Unless required by applicable law or agreed to in writing, software
++** distributed under the License is distributed on an "AS IS" BASIS,
++** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++** See the License for the specific language governing permissions and
++** limitations under the License.
++*/
++-->
++
++<set xmlns:android="http://schemas.android.com/apk/res/android"
++        android:ordering="sequentially"
++        android:startOffset="200">
++
++    <objectAnimator
++        android:propertyName="progress"
++        android:duration="250"
++        android:interpolator="@interpolator/disco_bounce_section1"
++        android:valueFrom="1f"
++        android:valueTo=".94f"
++        android:valueType="floatType"/>
++    <objectAnimator
++        android:propertyName="progress"
++        android:duration="216"
++        android:interpolator="@interpolator/disco_bounce_section2"
++        android:valueFrom=".94f"
++        android:valueTo="1.012f"
++        android:valueType="floatType"/>
++    <objectAnimator
++        android:propertyName="progress"
++        android:duration="234"
++        android:interpolator="@interpolator/disco_bounce_section3"
++        android:valueFrom="1.012f"
++        android:valueTo="1f"
++        android:valueType="floatType"/>
++</set>
+diff --git a/res/values/config.xml b/res/values/config.xml
+index 26c5ed6..39e4931 100644
+--- a/res/values/config.xml
++++ b/res/values/config.xml
+@@ -136,7 +136,7 @@
+     <item type="id" name="action_dismiss_notification" />
+ 
+ <!-- Custom Edit: Home Screen Grid Size -->
+-    <string-array name="grid_size_text">
++    <string-array name="grid_size_text" translatable="false">
+         <item>Default</item>
+         <item>2x2</item>
+         <item>3x3</item>
+@@ -146,7 +146,7 @@
+         <item>5x6 (Tablet)</item>
+         <item>7x7 (Tablet)</item>
+     </string-array>
+-    <string-array name="grid_size_ent">
++    <string-array name="grid_size_ent" translatable="false">
+         <item>0</item>
+         <item>1</item>
+         <item>2</item>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 089cb1b..7326fea 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -17,7 +17,9 @@
+ */
+ -->
+ 
+-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
++<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2"
++    xmlns:tools="http://schemas.android.com/tools"
++    tools:ignore="MissingTranslation">
+     <!-- General -->
+     <skip />
+ 
+diff --git a/src/com/android/launcher3/allapps/AllAppsTransitionController.java b/src/com/android/launcher3/allapps/AllAppsTransitionController.java
+index 759b005..b9836e2 100644
+--- a/src/com/android/launcher3/allapps/AllAppsTransitionController.java
++++ b/src/com/android/launcher3/allapps/AllAppsTransitionController.java
+@@ -394,7 +394,7 @@ public class AllAppsTransitionController implements TouchController, VerticalPul
+ 
+         // assumption is that this variable is always null
+         mDiscoBounceAnimation = (AnimatorSet) AnimatorInflater.loadAnimator(mLauncher,
+-                R.anim.discovery_bounce);
++                R.animator.discovery_bounce);
+         mDiscoBounceAnimation.addListener(new AnimatorListenerAdapter() {
+             @Override
+             public void onAnimationStart(Animator animator) {
+-- 
+2.7.2.windows.1
+
+From 49e331ba4af8076f814ec1d886b7291b6be35d19 Mon Sep 17 00:00:00 2001
+From: itachi1706 <kennethsohyq@gmail.com>
+Date: Sun, 3 Sep 2017 17:07:38 +0800
+Subject: [PATCH] Added a preference option for showing modification
+
+---
+  res/xml/launcher_preferences.xml |   4 +++-
+ 1 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/res/xml/launcher_preferences.xml b/res/xml/launcher_preferences.xml
+index 11275f6..bc2cb24 100644
+--- a/res/xml/launcher_preferences.xml
++++ b/res/xml/launcher_preferences.xml
+@@ -49,7 +49,7 @@
+                 android:name=":settings:fragment_args_key"
+                 android:value="notification_badging" />
+         </intent>
+-    </Preference>/>
++    </Preference>
+ 
+     <SwitchPreference
+         android:key="pref_allowRotation"
+@@ -67,5 +67,7 @@
+         android:entryValues="@array/grid_size_ent"
+         android:defaultValue="0"
+         android:persistent="false" />
++
++    <Preference android:key="mod_version" android:title="Mod Version" android:summary="1.0" />
+     <!-- End Custom -->
+ </PreferenceScreen>
+-- 
+2.7.2.windows.1
+
