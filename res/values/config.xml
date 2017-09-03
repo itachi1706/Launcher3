@@ -136,7 +136,7 @@
     <item type="id" name="action_dismiss_notification" />
 
 <!-- Custom Edit: Home Screen Grid Size -->
-    <string-array name="grid_size_text">
+    <string-array name="grid_size_text" translatable="false">
         <item>Default</item>
         <item>2x2</item>
         <item>3x3</item>
@@ -146,7 +146,7 @@
         <item>5x6 (Tablet)</item>
         <item>7x7 (Tablet)</item>
     </string-array>
-    <string-array name="grid_size_ent">
+    <string-array name="grid_size_ent" translatable="false">
         <item>0</item>
         <item>1</item>
         <item>2</item>
