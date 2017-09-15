@@ -28,6 +28,9 @@ android {
         debug {
             minifyEnabled false
         }
+        release {
+            debuggable true
+        }
     }
 
     productFlavors {
