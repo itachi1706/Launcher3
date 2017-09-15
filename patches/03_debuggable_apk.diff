@@ -1,0 +1,26 @@
+From b5ce17b61290120097d5061e389050f550735114 Mon Sep 17 00:00:00 2001
+From: itachi1706 <kennethsohyq@gmail.com>
+Date: Fri, 15 Sep 2017 22:13:21 +0800
+Subject: [PATCH] Set debuggable to true in release build
+
+---
+ build.gradle | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/build.gradle b/build.gradle
+index 5f539b1..9229f8f 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -28,6 +28,9 @@ android {
+         debug {
+             minifyEnabled false
+         }
++        release {
++            debuggable true
++        }
+     }
+ 
+     productFlavors {
+-- 
+2.7.2.windows.1
+
